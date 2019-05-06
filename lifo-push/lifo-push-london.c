@@ -48,4 +48,4 @@ void list_pop_all()
 	}
 }
 
-#include "fifo-stress.h"
+#include "lifo-stress.h"
