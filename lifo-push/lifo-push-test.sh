@@ -1,4 +1,9 @@
-for ((i=0;i<1000;i++))
+#!/bin/bash
+for ((i=0;i<50;i++))
 do
-	time ./lifo-push
+	for pgm in ./lifo-push ./lifo-push-london
+	do
+		echo Running $pgm
+		time $pgm
+	done
 done
