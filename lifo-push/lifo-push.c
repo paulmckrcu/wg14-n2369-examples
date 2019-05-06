@@ -30,11 +30,9 @@ void list_push(value_t v)
 
 	set_value(newnode, v);
 	newnode->next = atomic_load(&top);
-	while (1) {
+	do {
 		// newnode->next may have become invalid
-		if (atomic_compare_exchange_weak(&top, &newnode->next, newnode))
-			break;
-	}
+	} while (!atomic_compare_exchange_weak(&top, &newnode->next, newnode));
 }
 
 
