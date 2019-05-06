@@ -2,5 +2,5 @@ PGMS = lifo-push
 
 all: $(PGMS)
 
-lifo-push: lifo-push.c
+lifo-push: lifo-push.c fifo-stress.h
 	cc -g -Wall -o lifo-push lifo-push.c -lpthread
