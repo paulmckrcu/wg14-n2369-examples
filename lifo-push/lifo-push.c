@@ -1,3 +1,7 @@
+// Copyright IBM Corporation, 2019
+// Authors: Paul E. McKenney, IBM Linux Technology Center
+//	Adapted from Maged Michael's pseudocode in WG14 N2369.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

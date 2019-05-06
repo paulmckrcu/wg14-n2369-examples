@@ -1,3 +1,7 @@
+// Copyright IBM Corporation, 2019
+// Authors: Paul E. McKenney, IBM Linux Technology Center
+//	Adapted from lifo-push.c based on suggestions by Jens Gustedt.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

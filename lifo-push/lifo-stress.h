@@ -3,6 +3,12 @@
 // Stress-test code
 //
 // Also serves as a crude high-contention performance test.
+//
+// Copyright IBM Corporation, 2019
+// Authors: Paul E. McKenney, IBM Linux Technology Center
+//	Adapted from similar tests in "Is Parallel Programming Hard,
+//	And, If So, What Can You Do About It?":
+//	git://git.kernel.org/pub/scm/linux/kernel/git/paulmck/perfbook.git
 
 #define N_PUSH 2
 #define N_POP  2
