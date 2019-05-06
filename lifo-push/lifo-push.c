@@ -29,14 +29,10 @@ void list_push(value_t v)
 	struct node_t *newnode = (struct node_t *) malloc(sizeof(*newnode));
 
 	set_value(newnode, v);
+	newnode->next = atomic_load(&top);
 	while (1) {
-		struct node_t *p = atomic_load(&top);
-
-		// p may have become invalid
-		newnode->next = p; // May store invalid pointer that is
-				   // dereferenced later but only if it
-				   // is equal to a valid pointer.
-		if (atomic_compare_exchange_weak(&top, &p, newnode))
+		// newnode->next may have become invalid
+		if (atomic_compare_exchange_weak(&top, &newnode->next, newnode))
 			break;
 	}
 }
