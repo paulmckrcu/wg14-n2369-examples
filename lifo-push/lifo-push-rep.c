@@ -1,20 +1,26 @@
 // Copyright IBM Corporation, 2019
 // Authors: Paul E. McKenney, IBM Linux Technology Center
 //	Adapted from lifo-push.c based on suggestions by Jens Gustedt
-//	(substitute CAS for load) and Martin Sebor (casts to uintptr_t).
+//	(substitute CAS for load) and Martin Sebor (casts to PointerRep).
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <string.h>
 #include <stdatomic.h>
 #include <pthread.h>
 
 typedef char *value_t;
 
+struct PointerRep {
+	_Alignas (void *) unsigned char rep[sizeof(void *)];
+};
+const struct PointerRep NULLpr = { 0 };
+
 struct node_t {
 	value_t val;
-	uintptr_t next;
+	struct PointerRep next;
 };
 
 void set_value(struct node_t *p, value_t v)
@@ -24,36 +30,42 @@ void set_value(struct node_t *p, value_t v)
 
 void foo(struct node_t *p);
 
-int list_empty(uintptr_t p)
+int list_empty(struct PointerRep p)
 {
-	return p == (uintptr_t)NULL;
+	return memcmp(&p, &NULLpr, sizeof(p)) == 0;
 }
 #define list_empty(p) list_empty(p)
 
 // LIFO list structure
-uintptr_t _Atomic top;
+struct PointerRep _Atomic top;
 
 void list_push(value_t v)
 {
 	struct node_t *newnode = (struct node_t *) malloc(sizeof(*newnode));
+	struct PointerRep newnodepr;
 
 	set_value(newnode, v);
-	newnode->next = (uintptr_t)NULL;
+	newnode->next = NULLpr;
 	do {
-	} while (!atomic_compare_exchange_weak(&top, &newnode->next, (uintptr_t)newnode));
+		memcpy(&newnodepr, &newnode, sizeof(newnodepr));
+	} while (!atomic_compare_exchange_weak(&top, &newnode->next, newnodepr));
 }
 
 
 void list_pop_all()
 {
-	struct node_t *p = (struct node_t *)atomic_exchange(&top, (uintptr_t)NULL);
+	struct PointerRep ppr = atomic_exchange(&top, NULLpr);
+	struct node_t *p;
 
+	memcpy(&p, &ppr, sizeof(p));
 	while (p) {
-		struct node_t *next = (struct node_t *)p->next;
+		struct PointerRep next;
 
+		next = p->next;
 		foo(p);
 		free(p);
-		p = next;
+		ppr = next;
+		memcpy(&p, &ppr, sizeof(p));
 	}
 }
 

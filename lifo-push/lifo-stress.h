@@ -17,6 +17,13 @@
 char s[N_PUSH * N_ELEM];
 int _Atomic goflag;
 
+#ifndef list_empty
+int list_empty(struct node_t *p)
+{
+	return p == NULL;
+}
+#endif
+
 void foo(struct node_t *p)
 {
 	(*p->val)++;
@@ -67,7 +74,7 @@ int main(int argc, char *argv[])
 			perror("pthread_join");
 			exit(1);
 		}
-	while (atomic_load(&top))
+	while (!list_empty(top))
 		sleep(1);
 	atomic_store(&goflag, 2);
 	for (i = 0; i < N_POP; i++)
