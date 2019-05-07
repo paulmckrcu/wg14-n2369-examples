@@ -1,4 +1,4 @@
-PGMS = lifo-push lifo-push-int lifo-push-london
+PGMS = lifo-push lifo-push-int lifo-push-london lifo-push-rcu
 
 all: $(PGMS)
 
@@ -10,3 +10,6 @@ lifo-push-int: lifo-push-int.c lifo-stress.h
 
 lifo-push-london: lifo-push-london.c lifo-stress.h
 	cc -g -Wall -o lifo-push-london lifo-push-london.c -lpthread
+
+lifo-push-rcu: lifo-push-rcu.c lifo-stress.h
+	cc -g -Wall -o lifo-push-rcu lifo-push-rcu.c -lpthread -lurcu -lurcu-signal
