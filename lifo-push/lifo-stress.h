@@ -12,7 +12,7 @@
 
 #define N_PUSH 2
 #define N_POP  2
-#define N_ELEM (100 * 1000 * 1000L)
+#define N_ELEM (10 * 1000 * 1000L)
 
 char s[N_PUSH * N_ELEM];
 int _Atomic goflag;
