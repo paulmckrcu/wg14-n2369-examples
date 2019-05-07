@@ -27,10 +27,12 @@ void *push_em(void *arg)
 	long i;
 	char *my_s = arg;
 
+	rcu_register_thread();
 	while (!atomic_load(&goflag))
 		continue;
 	for (i = 0; i < N_ELEM; i++)
 		list_push(&my_s[i]);
+	rcu_unregister_thread();
 	return NULL;
 }
 

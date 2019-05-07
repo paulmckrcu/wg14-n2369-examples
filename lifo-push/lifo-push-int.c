@@ -51,4 +51,6 @@ void list_pop_all()
 	}
 }
 
+#define rcu_register_thread() do { } while (0)
+#define rcu_unregister_thread() do { } while (0)
 #include "lifo-stress.h"
