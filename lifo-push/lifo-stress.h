@@ -17,6 +17,11 @@
 char s[N_PUSH * N_ELEM];
 int _Atomic goflag;
 
+void foo(struct node_t *p)
+{
+	(*p->val)++;
+}
+
 void *push_em(void *arg)
 {
 	long i;

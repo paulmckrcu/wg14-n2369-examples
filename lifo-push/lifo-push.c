@@ -20,10 +20,7 @@ void set_value(struct node_t *p, value_t v)
 	p->val = v;
 }
 
-void foo(struct node_t *p)
-{
-	(*p->val)++;
-}
+void foo(struct node_t *p);
 
 // LIFO list structure
 struct node_t* _Atomic top;
