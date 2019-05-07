@@ -25,7 +25,7 @@ void set_value(struct node_t *p, value_t v)
 void foo(struct node_t *p);
 
 // LIFO list structure
-struct node_t* _Atomic top;
+uintptr_t _Atomic top;
 
 void list_push(value_t v)
 {
@@ -34,13 +34,13 @@ void list_push(value_t v)
 	set_value(newnode, v);
 	newnode->next = (uintptr_t)NULL;
 	do {
-	} while (!atomic_compare_exchange_weak((uintptr_t *)&top, &newnode->next, (uintptr_t)newnode));
+	} while (!atomic_compare_exchange_weak(&top, &newnode->next, (uintptr_t)newnode));
 }
 
 
 void list_pop_all()
 {
-	struct node_t *p = atomic_exchange(&top, NULL);
+	struct node_t *p = (struct node_t *)atomic_exchange(&top, (uintptr_t)NULL);
 
 	while (p) {
 		struct node_t *next = (struct node_t *)p->next;
