@@ -1,6 +1,11 @@
 // Copyright IBM Corporation, 2019
 // Authors: Paul E. McKenney, IBM Linux Technology Center
 //	Adapted from lifo-push.c, adding RCU protection from ABA.
+//
+//	This protection is stronger (and, within list_pop_all(),
+//	more expensive) than strictly required, but it has the useful
+//	side-effect of preventing the algorithm from seeing indeterminate
+//	pointers.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,7 +47,9 @@ void list_push(value_t v)
 	rcu_read_lock();
 	newnode->next = atomic_load(&top);
 	do {
-		// newnode->next may have become invalid
+		// newnode->next may have been removed from the list, but
+		// RCU prevents it from being freed.  Thus this pointer
+		// remains valid throughout.
 	} while (!atomic_compare_exchange_weak(&top, &newnode->next, newnode));
 	rcu_read_unlock();
 }

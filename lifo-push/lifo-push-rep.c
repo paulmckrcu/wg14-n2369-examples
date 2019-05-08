@@ -2,6 +2,9 @@
 // Authors: Paul E. McKenney, IBM Linux Technology Center
 //	Adapted from lifo-push.c based on suggestions by Jens Gustedt
 //	(substitute CAS for load) and Martin Sebor (casts to PointerRep).
+//
+// Absolutely -not- recommended for large-scale production use due to
+// the loss of type checking.  You have been warned!!!
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,6 +50,14 @@ void list_push(value_t v)
 	set_value(newnode, v);
 	newnode->next = NULLpr;
 	do {
+		// The object at the address corresponding to newnode->next
+                // might be freed and reallocated at this point.  As of
+                // early May 2019, there was some disagreement among WG14
+                // committee members as to whether the C standard supports
+                // newnode->next being converted back into a pointer to
+                // a node_t structure in this case.  Some members have
+		// stated that a C implementation is permitted to modify
+		// the representation bytes of an indeterminate pointer.
 		memcpy(&newnodepr, &newnode, sizeof(newnodepr));
 	} while (!atomic_compare_exchange_weak(&top, &newnode->next, newnodepr));
 }

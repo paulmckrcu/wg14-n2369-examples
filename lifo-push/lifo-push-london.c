@@ -32,6 +32,9 @@ void list_push(value_t v)
 	set_value(newnode, v);
 	newnode->next = NULL;
 	do {
+		// newnode->next may have become indeterminate, which might
+		// result in list_pop_all() loading an indeterminate pointer
+		// from ->next whose address points to a reallocated object.
 	} while (!atomic_compare_exchange_weak(&top, &newnode->next, newnode));
 }
 
