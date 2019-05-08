@@ -2,6 +2,8 @@
 // Authors: Paul E. McKenney, IBM Linux Technology Center
 //	Adapted from lifo-push.c based on suggestions by Jens Gustedt
 //	(substitute CAS for load) and Martin Sebor (casts to PointerRep).
+//	Note that Martin has not yet indicated whether or not the code
+//	in this file matches his intent.
 //
 // Absolutely -not- recommended for large-scale production use due to
 // the loss of type checking.  You have been warned!!!
