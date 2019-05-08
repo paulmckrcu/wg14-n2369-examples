@@ -1,4 +1,5 @@
 lifo-push
+lifo-push-atomic
 lifo-push-int
 lifo-push-london
 lifo-push-rcu

@@ -7,7 +7,7 @@
 
 for ((i=0;i<50;i++))
 do
-	for pgm in ./lifo-push ./lifo-push-int ./lifo-push-london ./lifo-push-rcu ./lifo-push-rep
+	for pgm in ./lifo-push ./lifo-push-atomic ./lifo-push-int ./lifo-push-london ./lifo-push-rcu ./lifo-push-rep
 	do
 		echo Running $pgm iteration $i
 		time $pgm
