@@ -77,8 +77,7 @@ void list_pop_all()
 		next = p->next;
 		foo(p);
 		free(p);
-		ppr = next;
-		memcpy(&p, &ppr, sizeof(p));
+		memcpy(&p, &next, sizeof(p));
 	}
 }
 
