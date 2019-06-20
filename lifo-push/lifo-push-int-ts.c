@@ -86,7 +86,7 @@ void list_push(value_t v)
 		 * the integer (and 'struct node_ptr_t'*) for 'top' and 'next'
 		 * compare equal. In this case, 'atomic_compare_exhange_weak'
 		 * succeeds and overwrites 'top'. It points to a new object
-		 * that has would have an invalid pointer in 'next' in the
+		 * that would have an invalid pointer in 'next' in the
 		 * traditional pointer-based implementation. Here it has
 		 * an integer with the expected value (the abstract address
 		 * of the object).
