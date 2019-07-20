@@ -97,8 +97,10 @@ struct part *delete_by_name(int name)
 {
 	int idhash;
 	int namehash = parthash(name);
-	struct part *partp = nametab[name];
+	struct part *partp = READ_ONCE(nametab[name]);
 
+	if (!partp)
+		return NULL;
 	acquire_lock(partp);
 	if (READ_ONCE(nametab[namehash]) == partp &&
 	    partp->name == name) {
@@ -106,6 +108,8 @@ struct part *delete_by_name(int name)
 		assert(idtab[idhash] == partp);
 		WRITE_ONCE(idtab[idhash], NULL);
 		WRITE_ONCE(nametab[namehash], NULL);
+	} else {
+		partp = NULL;
 	}
 	release_lock(partp);
 	return partp;
