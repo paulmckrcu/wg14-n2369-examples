@@ -17,7 +17,7 @@
 #include <assert.h>
 #include <pthread.h>
 
-#define N_HASH (1024 * 1024)
+#define N_HASH /* (1024 * 1024) */ 256
 #include "shard-lock.h"
 
 // Parts keyed by name and by ID.
@@ -102,16 +102,17 @@ int insert_part_by_name(struct part *partp)
 	return ret;
 }
 
-int lookup_by_id(int id, struct part *partp_out)
+int lookup_by_bucket(struct part **tab, struct part **bkt,
+		     struct part *partp_out)
 {
-	int idhash = parthash(id);
-	struct part *partp = READ_ONCE(idtab[idhash]);
+	int hash = bkt - &tab[0];
+	struct part *partp = READ_ONCE(tab[hash]);
 	int ret = 0;
 
 	if (!partp)
 		return 0;
 	acquire_lock(partp);
-	if (partp == idtab[idhash]) {
+	if (partp == tab[hash]) {
 		*partp_out = *partp;
 		ret = 1;
 	}
@@ -119,21 +120,14 @@ int lookup_by_id(int id, struct part *partp_out)
 	return ret;
 }
 
+int lookup_by_id(int id, struct part *partp_out)
+{
+	return lookup_by_bucket(idtab, &idtab[parthash(id)], partp_out);
+}
+
 int lookup_by_name(int name, struct part *partp_out)
 {
-	int namehash = parthash(name);
-	struct part *partp = READ_ONCE(nametab[namehash]);
-	int ret = 0;
-
-	if (!partp)
-		return 0;
-	acquire_lock(partp);
-	if (partp == nametab[namehash]) {
-		*partp_out = *partp;
-		ret = 1;
-	}
-	release_lock(partp);
-	return ret;
+	return lookup_by_bucket(nametab, &nametab[parthash(name)], partp_out);
 }
 
 void smoketest(void)
