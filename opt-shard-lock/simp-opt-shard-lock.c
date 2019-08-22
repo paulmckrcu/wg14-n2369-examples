@@ -118,14 +118,22 @@ int lookup_by_bucket(struct part **tab, struct part **bkt,
 	return ret;
 }
 
-int lookup_by_id(int id, struct part *partp_out)
+int lookup_by_id(int id, struct part *partp)
 {
-	return lookup_by_bucket(idtab, &idtab[parthash(id)], partp_out);
+	int ret = lookup_by_bucket(idtab, &idtab[parthash(id)], partp);
+
+	if (partp->id == id)
+		return ret;
+	return 0;
 }
 
-int lookup_by_name(int name, struct part *partp_out)
+int lookup_by_name(int name, struct part *partp)
 {
-	return lookup_by_bucket(nametab, &nametab[parthash(name)], partp_out);
+	int ret = lookup_by_bucket(nametab, &nametab[parthash(name)], partp);
+
+	if (partp->name == name)
+		return ret;
+	return 0;
 }
 
 void smoketest(void)
@@ -145,12 +153,11 @@ void smoketest(void)
 
 	assert(lookup_by_name(7, &pout));
 	assert(pout.name == 7 && pout.id == 12);
+	assert(!lookup_by_name(7 + N_HASH, &pout));
 	assert(!lookup_by_name(6, &pout));
-	assert(pout.name == 7 && pout.id == 12);
 	assert(lookup_by_id(10, &pout));
 	assert(pout.name == 5 && pout.id == 10);
 	assert(!lookup_by_id(11, &pout));
-	assert(pout.name == 5 && pout.id == 10);
 
 	assert(delete_by_id(10) == &p0);
 	assert(!delete_by_id(11));
