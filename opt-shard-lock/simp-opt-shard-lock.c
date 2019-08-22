@@ -74,32 +74,30 @@ struct part *delete_by_name(int name)
 	return partp;
 }
 
-int insert_part_by_id(struct part *partp)
+int insert_part_by_bucket(struct part **tab, struct part **bkt,
+			  struct part *partp)
 {
-	int idhash = parthash(partp->id);
+	int hash = bkt - &tab[0];
 	int ret = 0;
 
-	acquire_lock(&idtab[idhash]);
-	if (!idtab[idhash]) {
-		WRITE_ONCE(idtab[idhash], partp);
+	acquire_lock(&tab[hash]);
+	if (!tab[hash]) {
+		WRITE_ONCE(tab[hash], partp);
 		ret = 1;
 	}
-	release_lock(&idtab[idhash]);
+	release_lock(&tab[hash]);
 	return ret;
+}
+
+int insert_part_by_id(struct part *partp)
+{
+	return insert_part_by_bucket(idtab, &idtab[parthash(partp->id)], partp);
 }
 
 int insert_part_by_name(struct part *partp)
 {
-	int namehash = parthash(partp->name);
-	int ret = 0;
-
-	acquire_lock(&nametab[namehash]);
-	if (!nametab[namehash]) {
-		WRITE_ONCE(nametab[namehash], partp);
-		ret = 1;
-	}
-	release_lock(&nametab[namehash]);
-	return ret;
+	return insert_part_by_bucket(nametab, &nametab[parthash(partp->name)],
+				     partp);
 }
 
 int lookup_by_bucket(struct part **tab, struct part **bkt,
