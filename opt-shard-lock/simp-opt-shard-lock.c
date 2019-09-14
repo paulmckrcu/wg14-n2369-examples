@@ -30,6 +30,7 @@ struct part {
 struct part *nametab[N_HASH];
 struct part *idtab[N_HASH];
 
+// Delete from all tables, return pointer to part or NULL if not present
 struct part *delete_by_id(int id)
 {
 	int idhash = parthash(id);
@@ -52,6 +53,7 @@ struct part *delete_by_id(int id)
 	return partp;
 }
 
+// Delete from all tables, return pointer to part or NULL if not present
 struct part *delete_by_name(int name)
 {
 	int idhash;
@@ -74,6 +76,7 @@ struct part *delete_by_name(int name)
 	return partp;
 }
 
+// Insertion helper function
 int insert_part_by_bucket(struct part **tab, struct part **bkt,
 			  struct part *partp)
 {
@@ -89,17 +92,20 @@ int insert_part_by_bucket(struct part **tab, struct part **bkt,
 	return ret;
 }
 
+// Insert specified part by its ID, return true if successful
 int insert_part_by_id(struct part *partp)
 {
 	return insert_part_by_bucket(idtab, &idtab[parthash(partp->id)], partp);
 }
 
+// Insert specified part by its name, return true if successful
 int insert_part_by_name(struct part *partp)
 {
 	return insert_part_by_bucket(nametab, &nametab[parthash(partp->name)],
 				     partp);
 }
 
+// Lookup helper function
 int lookup_by_bucket(struct part **tab, struct part **bkt,
 		     struct part *partp_out)
 {
@@ -118,6 +124,7 @@ int lookup_by_bucket(struct part **tab, struct part **bkt,
 	return ret;
 }
 
+// Lookup part by ID, copying it out and returning true if found
 int lookup_by_id(int id, struct part *partp)
 {
 	int ret = lookup_by_bucket(idtab, &idtab[parthash(id)], partp);
@@ -127,6 +134,7 @@ int lookup_by_id(int id, struct part *partp)
 	return 0;
 }
 
+// Lookup part by name, copying it out and returning true if found
 int lookup_by_name(int name, struct part *partp)
 {
 	int ret = lookup_by_bucket(nametab, &nametab[parthash(name)], partp);
