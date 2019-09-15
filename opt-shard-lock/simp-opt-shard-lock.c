@@ -14,7 +14,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <poll.h>
 #include <assert.h>
+#include <stdatomic.h>
 #include <pthread.h>
 
 #define N_HASH /* (1024 * 1024) */ 256
@@ -25,6 +27,8 @@ struct part {
 	int name;
 	int id;
 	int data;
+	int namestate; // 0=out, 1=in
+	int idstate; // 0=out, 1=in
 };
 
 struct part *nametab[N_HASH];
@@ -144,6 +148,99 @@ int lookup_by_name(int name, struct part *partp)
 	return 0;
 }
 
+int nthreads = 4;
+int partsperthread = 1000;
+int _Atomic goflag;
+
+void *stress_shard(void *arg)
+{
+	uintptr_t count = 0;
+	int i;
+	struct part *partbase = (struct part *)arg;
+
+	printf("%s: partbase: %p\n", __func__, partbase);
+	while (!atomic_load(&goflag))
+		continue;
+	while (atomic_load(&goflag) < 2) {
+		for (i = 0; i < partsperthread; i++) {
+			struct part *p = &partbase[i];
+			struct part part_out;
+
+			assert(lookup_by_id(p->id, &part_out) == p->idstate);
+			if (p->idstate) {
+				assert(p->name == part_out.name);
+				assert(p->id == part_out.id);
+				assert(p->data == part_out.data);
+			}
+			assert(lookup_by_name(p->name,
+					      &part_out) == p->namestate);
+			if (p->namestate) {
+				assert(p->name == part_out.name);
+				assert(p->id == part_out.id);
+				assert(p->data == part_out.data);
+			}
+			if (!p->idstate && insert_part_by_id(p)) {
+				assert(lookup_by_id(p->id, &part_out));
+				p->idstate = 1;
+				continue;
+			} else if (!p->idstate) {
+				continue; // Couldn't insert
+			} else if (!p->namestate && insert_part_by_name(p)) {
+				assert(lookup_by_name(p->name, &part_out));
+				p->namestate = 1;
+				continue;
+			} else if (!p->namestate) {
+				continue;
+			} else if (i & 0x1) {
+				assert(delete_by_id(p->id) == p);
+				p->idstate = 0;
+			} else {
+				assert(delete_by_name(p->name) == p);
+				p->namestate = 0;
+			}
+		}
+		count++;
+	}
+	return (void *)count;
+}
+
+void stresstest(void)
+{
+	int i;
+	struct part *partbin;
+	pthread_t *tidp;
+	void *vp;
+
+	printf("Starting stress test.\n");
+	partbin = malloc(sizeof(*partbin) * nthreads * partsperthread);
+	tidp = malloc(sizeof(*tidp) * nthreads);
+	printf("Starting stress test.\n");
+	for (i = 0; i < nthreads * partsperthread; i++) {
+		partbin[i].name = i;
+		partbin[i].id = 3 * i;
+		partbin[i].data = 7 * i;
+		partbin[i].namestate = 0;
+		partbin[i].idstate = 0;
+	}
+	for (i = 0; i < nthreads; i++) {
+		if (pthread_create(&tidp[i], NULL, stress_shard,
+				   (void *)&partbin[i * partsperthread])) {
+			perror("pthread_create");
+			exit(1);
+		}
+	}
+	atomic_store(&goflag, 1);
+	poll(NULL, 0, 100);
+	atomic_store(&goflag, 2);
+	for (i = 0; i < nthreads; i++) {
+		if (pthread_join(tidp[i], &vp)) {
+			perror("pthread_join");
+			exit(1);
+		}
+		printf("Thread %d # loops: %lu\n", i, (uintptr_t)vp);
+	}
+}
+
 void smoketest(void)
 {
 	struct part p0 = { .name = 5, .id = 10, .data = 42, };
@@ -152,6 +249,7 @@ void smoketest(void)
 	struct part p3 = { .name = 7, .id = 12, .data = 45, };
 	struct part pout;
 
+	printf("Starting smoke test.\n");
 	assert(insert_part_by_id(&p0));
 	assert(insert_part_by_name(&p0));
 	assert(!insert_part_by_name(&p1));
@@ -176,5 +274,6 @@ void smoketest(void)
 int main(int argc, char *argv[])
 {
 	smoketest();
+	stresstest();
 	return 0;
 }
