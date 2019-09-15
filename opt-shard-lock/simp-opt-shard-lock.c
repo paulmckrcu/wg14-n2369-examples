@@ -165,15 +165,21 @@ void *stress_shard(void *arg)
 		for (i = 0; i < partsperthread; i++) {
 			struct part *p = &partbase[i];
 			struct part part_out;
+			int state;
 
-			assert(lookup_by_id(p->id, &part_out) == p->idstate);
+			state = lookup_by_id(p->id, &part_out);
+			assert(state == 0 || state == 1);
+			assert(p->idstate == 0 || p->idstate == 1);
+			assert(state == p->idstate);
 			if (p->idstate) {
 				assert(p->name == part_out.name);
 				assert(p->id == part_out.id);
 				assert(p->data == part_out.data);
 			}
-			assert(lookup_by_name(p->name,
-					      &part_out) == p->namestate);
+			state = lookup_by_name(p->name, &part_out);
+			assert(state == 0 || state == 1);
+			assert(p->namestate == 0 || p->namestate == 1);
+			assert(state == p->namestate);
 			if (p->namestate) {
 				assert(p->name == part_out.name);
 				assert(p->id == part_out.id);
@@ -193,9 +199,11 @@ void *stress_shard(void *arg)
 				continue;
 			} else if (i & 0x1) {
 				assert(delete_by_id(p->id) == p);
+				assert(!lookup_by_id(p->id, &part_out));
 				p->idstate = 0;
 			} else {
 				assert(delete_by_name(p->name) == p);
+				assert(!lookup_by_name(p->name, &part_out));
 				p->namestate = 0;
 			}
 		}
@@ -214,7 +222,6 @@ void stresstest(void)
 	printf("Starting stress test.\n");
 	partbin = malloc(sizeof(*partbin) * nthreads * partsperthread);
 	tidp = malloc(sizeof(*tidp) * nthreads);
-	printf("Starting stress test.\n");
 	for (i = 0; i < nthreads * partsperthread; i++) {
 		partbin[i].name = i;
 		partbin[i].id = 3 * i;
@@ -253,6 +260,7 @@ void smoketest(void)
 	assert(insert_part_by_id(&p0));
 	assert(insert_part_by_name(&p0));
 	assert(!insert_part_by_name(&p1));
+	assert(lookup_by_name(5, &pout));
 	assert(!insert_part_by_id(&p2));
 	assert(insert_part_by_id(&p3));
 	assert(insert_part_by_name(&p3));
