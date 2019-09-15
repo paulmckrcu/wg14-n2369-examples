@@ -44,8 +44,7 @@ struct part *delete_by_id(int id)
 	if (!partp)
 		return NULL;
 	acquire_lock(partp);
-	if (READ_ONCE(idtab[idhash]) == partp &&
-	    partp->id == id) {
+	if (READ_ONCE(idtab[idhash]) == partp && partp->id == id) {
 		namehash = parthash(partp->name);
 		if (nametab[namehash] == partp)
 			WRITE_ONCE(nametab[namehash], NULL);
@@ -67,8 +66,7 @@ struct part *delete_by_name(int name)
 	if (!partp)
 		return NULL;
 	acquire_lock(partp);
-	if (READ_ONCE(nametab[namehash]) == partp &&
-	    partp->name == name) {
+	if (READ_ONCE(nametab[namehash]) == partp && partp->name == name) {
 		idhash = parthash(partp->id);
 		if (idtab[idhash] == partp)
 			WRITE_ONCE(idtab[idhash], NULL);
@@ -81,32 +79,29 @@ struct part *delete_by_name(int name)
 }
 
 // Insertion helper function
-int insert_part_by_bucket(struct part **tab, struct part **bkt,
-			  struct part *partp)
+int insert_part_by_bucket(struct part **bkt, struct part *partp)
 {
-	int hash = bkt - &tab[0];
 	int ret = 0;
 
-	acquire_lock(&tab[hash]);
-	if (!tab[hash]) {
-		WRITE_ONCE(tab[hash], partp);
+	acquire_lock(bkt);
+	if (!*bkt) {
+		WRITE_ONCE(*bkt, partp);
 		ret = 1;
 	}
-	release_lock(&tab[hash]);
+	release_lock(bkt);
 	return ret;
 }
 
 // Insert specified part by its ID, return true if successful
 int insert_part_by_id(struct part *partp)
 {
-	return insert_part_by_bucket(idtab, &idtab[parthash(partp->id)], partp);
+	return insert_part_by_bucket(&idtab[parthash(partp->id)], partp);
 }
 
 // Insert specified part by its name, return true if successful
 int insert_part_by_name(struct part *partp)
 {
-	return insert_part_by_bucket(nametab, &nametab[parthash(partp->name)],
-				     partp);
+	return insert_part_by_bucket(&nametab[parthash(partp->name)], partp);
 }
 
 // Lookup helper function
