@@ -43,9 +43,7 @@ struct part *delete_by_id(int id)
 
 	if (!partp)
 		return NULL;
-	// Suppose the part is removed here...
 	acquire_lock(partp);
-	// ...and is re-inserted here?  Might be no ordering.
 	if (READ_ONCE(idtab[idhash]) == partp && partp->id == id) {
 		namehash = parthash(partp->name);
 		if (nametab[namehash] == partp)
@@ -85,12 +83,12 @@ int insert_part_by_bucket(struct part **bkt, struct part *partp)
 {
 	int ret = 0;
 
-	acquire_lock(bkt);
+	acquire_lock_pair(bkt, partp);
 	if (!*bkt) {
 		WRITE_ONCE(*bkt, partp);
 		ret = 1;
 	}
-	release_lock(bkt);
+	release_lock_pair(bkt, partp);
 	return ret;
 }
 
@@ -236,7 +234,7 @@ void stresstest(void)
 		}
 	}
 	atomic_store(&goflag, 1);
-	poll(NULL, 0, 100);
+	poll(NULL, 0, 10000);
 	atomic_store(&goflag, 2);
 	for (i = 0; i < nthreads; i++) {
 		if (pthread_join(tidp[i], &vp)) {
