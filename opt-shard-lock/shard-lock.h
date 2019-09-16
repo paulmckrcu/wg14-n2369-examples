@@ -66,7 +66,7 @@ void release_lock_pair(void *p1, void *p2)
 	int i1 = hash_lock(p1);
 	int i2 = hash_lock(p2);
 
-	if (i1 < i2) {
+	if (i1 != i2) {
 		assert(!pthread_mutex_unlock(&shard_lock[i1]));
 		assert(!pthread_mutex_unlock(&shard_lock[i2]));
 	} else {
