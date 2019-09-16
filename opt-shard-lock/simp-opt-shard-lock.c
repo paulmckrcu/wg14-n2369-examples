@@ -43,7 +43,9 @@ struct part *delete_by_id(int id)
 
 	if (!partp)
 		return NULL;
+	// Suppose the part is removed here...
 	acquire_lock(partp);
+	// ...and is re-inserted here?  Might be no ordering.
 	if (READ_ONCE(idtab[idhash]) == partp && partp->id == id) {
 		namehash = parthash(partp->name);
 		if (nametab[namehash] == partp)
@@ -196,9 +198,11 @@ void *stress_shard(void *arg)
 				assert(delete_by_id(p->id) == p);
 				assert(!lookup_by_id(p->id, &part_out));
 				p->idstate = 0;
+				p->namestate = 0;
 			} else {
 				assert(delete_by_name(p->name) == p);
 				assert(!lookup_by_name(p->name, &part_out));
+				p->idstate = 0;
 				p->namestate = 0;
 			}
 		}
