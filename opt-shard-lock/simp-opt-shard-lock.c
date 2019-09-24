@@ -49,10 +49,11 @@ struct part *delete_by_id(int id)
 		if (nametab[namehash] == partp)
 			WRITE_ONCE(nametab[namehash], NULL);
 		WRITE_ONCE(idtab[idhash], NULL);
+		release_lock(partp);
 	} else {
+		release_lock(partp);
 		partp = NULL;
 	}
-	release_lock(partp);
 	return partp;
 }
 
@@ -71,10 +72,11 @@ struct part *delete_by_name(int name)
 		if (idtab[idhash] == partp)
 			WRITE_ONCE(idtab[idhash], NULL);
 		WRITE_ONCE(nametab[namehash], NULL);
+		release_lock(partp);
 	} else {
+		release_lock(partp);
 		partp = NULL;
 	}
-	release_lock(partp);
 	return partp;
 }
 
