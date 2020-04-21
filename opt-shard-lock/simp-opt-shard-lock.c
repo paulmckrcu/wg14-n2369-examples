@@ -146,6 +146,59 @@ int lookup_by_name(int name, struct part *partp)
 	return 0;
 }
 
+int alloc_and_insert_part_by_id(struct part *p)
+{
+	struct part *q = p->statp;
+
+	if (!q)
+		q = malloc(sizeof(*q));
+	assert(q);
+	*q = *p;
+	p->statp = q;
+	q->statp = p;
+	return insert_part_by_id(q);
+}
+
+int alloc_and_insert_part_by_name(struct part *p)
+{
+	struct part *q = p->statp;
+
+	if (!q)
+		q = malloc(sizeof(*q));
+	assert(q);
+	*q = *p;
+	p->statp = q;
+	q->statp = p;
+	return insert_part_by_name(q);
+}
+
+struct part *delete_and_free_by_id(int id)
+{
+	struct part *q = delete_by_id(id);
+	struct part *p;
+
+	if (!q)
+		return NULL;
+	p = q->statp;
+	free(q);
+	p->statp = NULL;
+	return p;
+}
+
+struct part *delete_and_free_by_name(int name)
+{
+	struct part *q = delete_by_name(name);
+	struct part *p;
+
+	if (!q)
+		return NULL;
+	p = q->statp;
+
+	free(q);
+	p->statp = NULL;
+	return p;
+}
+
 int nthreads = 4;
 int partsperthread = 1000;
 int _Atomic goflag;
@@ -173,6 +226,7 @@ void *stress_shard(void *arg)
 				assert(p->name == part_out.name);
 				assert(p->id == part_out.id);
 				assert(p->data == part_out.data);
+				assert(p == part_out.statp);
 			}
 			state = lookup_by_name(p->name, &part_out);
 			assert(state == 0 || state == 1);
@@ -182,26 +236,28 @@ void *stress_shard(void *arg)
 				assert(p->name == part_out.name);
 				assert(p->id == part_out.id);
 				assert(p->data == part_out.data);
+				assert(p == part_out.statp);
 			}
-			if (!p->idstate && insert_part_by_id(p)) {
+			if (!p->idstate && alloc_and_insert_part_by_id(p)) {
 				assert(lookup_by_id(p->id, &part_out));
 				p->idstate = 1;
 				continue;
 			} else if (!p->idstate) {
 				continue; // Couldn't insert
-			} else if (!p->namestate && insert_part_by_name(p)) {
+			} else if (!p->namestate &&
+				   alloc_and_insert_part_by_name(p)) {
 				assert(lookup_by_name(p->name, &part_out));
 				p->namestate = 1;
 				continue;
 			} else if (!p->namestate) {
 				continue;
 			} else if (i & 0x1) {
-				assert(delete_by_id(p->id) == p);
+				assert(delete_and_free_by_id(p->id) == p);
 				assert(!lookup_by_id(p->id, &part_out));
 				p->idstate = 0;
 				p->namestate = 0;
 			} else {
-				assert(delete_by_name(p->name) == p);
+				assert(delete_and_free_by_name(p->name) == p);
 				assert(!lookup_by_name(p->name, &part_out));
 				p->idstate = 0;
 				p->namestate = 0;
@@ -277,6 +333,28 @@ void smoketest(void)
 	assert(!delete_by_id(11));
 	assert(delete_by_name(7) == &p3);
 	assert(!delete_by_name(6));
+
+	printf("Starting malloc()/free() smoke test.\n");
+	assert(alloc_and_insert_part_by_id(&p0));
+	assert(alloc_and_insert_part_by_name(&p0));
+	assert(!alloc_and_insert_part_by_name(&p1));
+	assert(lookup_by_name(5, &pout));
+	assert(!alloc_and_insert_part_by_id(&p2));
+	assert(alloc_and_insert_part_by_id(&p3));
+	assert(alloc_and_insert_part_by_name(&p3));
+
+	assert(lookup_by_name(7, &pout));
+	assert(pout.name == 7 && pout.id == 12);
+	assert(!lookup_by_name(7 + N_HASH, &pout));
+	assert(!lookup_by_name(6, &pout));
+	assert(lookup_by_id(10, &pout));
+	assert(pout.name == 5 && pout.id == 10);
+	assert(!lookup_by_id(11, &pout));
+
+	assert(delete_and_free_by_id(10) == &p0);
+	assert(!delete_and_free_by_id(11));
+	assert(delete_and_free_by_name(7) == &p3);
+	assert(!delete_and_free_by_name(6));
 }
 
 int main(int argc, char *argv[])
