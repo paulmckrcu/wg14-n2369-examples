@@ -29,6 +29,7 @@ struct part {
 	int data;
 	int namestate; // 0=out, 1=in
 	int idstate; // 0=out, 1=in
+	struct part *statp; // Pointer to statically allocated shadow
 };
 
 struct part *nametab[N_HASH];
