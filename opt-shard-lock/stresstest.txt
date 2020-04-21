@@ -1,0 +1,67 @@
+// Delete from all tables, return pointer to part or NULL if not present
+struct part *delete_by_id(int id)
+
+// Delete from all tables, return pointer to part or NULL if not present
+struct part *delete_by_name(int name)
+
+// Insertion helper function
+int insert_part_by_bucket(struct part **tab, struct part **bkt,
+			  struct part *partp)
+
+// Insert specified part by its ID, return true if successful
+int insert_part_by_id(struct part *partp)
+
+// Insert specified part by its name, return true if successful
+int insert_part_by_name(struct part *partp)
+
+// Lookup helper function
+int lookup_by_bucket(struct part **tab, struct part **bkt,
+		     struct part *partp_out)
+
+// Lookup part by ID, copying it out and returning true if found
+int lookup_by_id(int id, struct part *partp)
+
+// Lookup part by name, copying it out and returning true if found
+int lookup_by_name(int name, struct part *partp)
+
+
+Partition name and ID space over threads, independently of N_HASH.
+
+Thread owns its ID range for insertion, "home thread".
+
+Any thread can delete, which returns ownership to "home thread"
+	Record this with a flag???  If so, ownership transitions
+	only when flag is clear.
+
+Flags for being in ID and name tables.  Thread sets flag before inserting
+	(and clears on insertion failure).  Whatever thread reomves
+	clears both flags after removal, but only if set.  (If already
+	clear, home thread might be trying to insert.
+
+Loop over owned elements.  Insert if not present in both tables, otherwise
+	remove.  If in neither table, randomly choose which to insert into.
+	If insertion fails, remove conflicting element?  (Doing so requires
+	some way of deleting by pointer.  Maybe a conflicting-ID function?)
+
+struct part *delete_conflicting_id(int id)
+{
+	const int idhash = parthash(id);
+	int namehash;
+	struct part *partp;
+
+	for (;;) {
+		partp = READ_ONCE(idtab[idhash]);
+		if (!partp)
+			return NULL;
+		acquire_lock(partp);
+		if (READ_ONCE(idtab[idhash]) == partp) {
+			namehash = parthash(partp->name);
+			if (READ_ONCE(nametab[namehash]) == partp)
+				WRITE_ONCE(nametab[namehash], NULL);
+			WRITE_ONCE(idtab[idhash], NULL);
+			release_lock(partp);
+			return partp;
+		}
+		release_lock(partp);
+	}
+}
