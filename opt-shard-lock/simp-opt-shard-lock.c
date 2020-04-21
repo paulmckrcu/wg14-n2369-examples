@@ -237,7 +237,7 @@ void stresstest(void)
 		}
 	}
 	atomic_store(&goflag, 1);
-	poll(NULL, 0, 10000);
+	poll(NULL, 0, 1000);
 	atomic_store(&goflag, 2);
 	for (i = 0; i < nthreads; i++) {
 		if (pthread_join(tidp[i], &vp)) {
