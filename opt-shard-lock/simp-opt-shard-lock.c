@@ -218,6 +218,12 @@ void *stress_shard(void *arg)
 			struct part part_out;
 			int state;
 
+			part_out.name = 0;
+			part_out.id = 0;
+			part_out.data = 0;
+			part_out.namestate = 0;
+			part_out.idstate = 0;
+			part_out.statp = NULL;
 			state = lookup_by_id(p->id, &part_out);
 			assert(state == 0 || state == 1);
 			assert(p->idstate == 0 || p->idstate == 1);
@@ -284,6 +290,7 @@ void stresstest(void)
 		partbin[i].data = 7 * i;
 		partbin[i].namestate = 0;
 		partbin[i].idstate = 0;
+		partbin[i].statp = NULL;
 	}
 	for (i = 0; i < nthreads; i++) {
 		if (pthread_create(&tidp[i], NULL, stress_shard,
