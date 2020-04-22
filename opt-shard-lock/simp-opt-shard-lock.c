@@ -260,11 +260,13 @@ void *stress_shard(void *arg)
 			} else if (i & 0x1) {
 				assert(delete_and_free_by_id(p->id) == p);
 				assert(!lookup_by_id(p->id, &part_out));
+				assert(!p->statp);
 				p->idstate = 0;
 				p->namestate = 0;
 			} else {
 				assert(delete_and_free_by_name(p->name) == p);
 				assert(!lookup_by_name(p->name, &part_out));
+				assert(!p->statp);
 				p->idstate = 0;
 				p->namestate = 0;
 			}
@@ -309,6 +311,10 @@ void stresstest(void)
 		}
 		printf("Thread %d # loops: %lu\n", i, (uintptr_t)vp);
 	}
+	for (i = 0; i < nthreads * partsperthread; i++)
+		free(partbin[i].statp);
+	free(partbin);
+	free(tidp);
 }
 
 void smoketest(void)
