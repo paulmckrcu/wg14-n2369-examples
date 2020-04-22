@@ -149,6 +149,7 @@ int lookup_by_name(int name, struct part *partp)
 int alloc_and_insert_part_by_id(struct part *p)
 {
 	struct part *q = p->statp;
+	int ret;
 
 	if (!q)
 		q = malloc(sizeof(*q));
@@ -156,12 +157,18 @@ int alloc_and_insert_part_by_id(struct part *p)
 	*q = *p;
 	p->statp = q;
 	q->statp = p;
-	return insert_part_by_id(q);
+	ret = insert_part_by_id(q);
+	if (!ret) {
+		p->statp = NULL;
+		free(q);
+	}
+	return ret;
 }
 
 int alloc_and_insert_part_by_name(struct part *p)
 {
 	struct part *q = p->statp;
+	int ret;
 
 	if (!q)
 		q = malloc(sizeof(*q));
@@ -169,7 +176,12 @@ int alloc_and_insert_part_by_name(struct part *p)
 	*q = *p;
 	p->statp = q;
 	q->statp = p;
-	return insert_part_by_name(q);
+	ret = insert_part_by_name(q);
+	if (!ret) {
+		p->statp = NULL;
+		free(q);
+	}
+	return ret;
 }
 
 struct part *delete_and_free_by_id(int id)
