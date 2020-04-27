@@ -193,7 +193,8 @@ struct part *delete_and_free_by_id(int id)
 		return NULL;
 	p = q->statp;
 	free(q);
-	p->statp = NULL;
+	if (random() & 0xfffffc0)
+		p->statp = NULL;
 	return p;
 }
 
@@ -207,7 +208,8 @@ struct part *delete_and_free_by_name(int name)
 	p = q->statp;
 
 	free(q);
-	p->statp = NULL;
+	if (random() & 0xfffffc0)
+		p->statp = NULL;
 	return p;
 }
 
@@ -384,6 +386,7 @@ void smoketest(void)
 
 int main(int argc, char *argv[])
 {
+	srandom(time(NULL));
 	smoketest();
 	stresstest();
 	return 0;
