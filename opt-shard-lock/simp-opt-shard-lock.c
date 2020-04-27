@@ -239,25 +239,10 @@ void *stress_shard(void *arg)
 			part_out.idstate = 0;
 			part_out.statp = NULL;
 			state = lookup_by_id(p->id, &part_out);
-			assert(state == 0 || state == 1);
-			assert(p->idstate == 0 || p->idstate == 1);
-			assert(state == p->idstate);
-			if (p->idstate) {
-				assert(p->name == part_out.name);
-				assert(p->id == part_out.id);
-				assert(p->data == part_out.data);
-				assert(p == part_out.statp);
-			}
 			state = lookup_by_name(p->name, &part_out);
 			assert(state == 0 || state == 1);
 			assert(p->namestate == 0 || p->namestate == 1);
 			assert(state == p->namestate);
-			if (p->namestate) {
-				assert(p->name == part_out.name);
-				assert(p->id == part_out.id);
-				assert(p->data == part_out.data);
-				assert(p == part_out.statp);
-			}
 			if (!p->idstate && alloc_and_insert_part_by_id(p)) {
 				assert(lookup_by_id(p->id, &part_out));
 				p->idstate = 1;
@@ -274,13 +259,11 @@ void *stress_shard(void *arg)
 			} else if (i & 0x1) {
 				assert(delete_and_free_by_id(p->id) == p);
 				assert(!lookup_by_id(p->id, &part_out));
-				assert(!p->statp);
 				p->idstate = 0;
 				p->namestate = 0;
 			} else {
 				assert(delete_and_free_by_name(p->name) == p);
 				assert(!lookup_by_name(p->name, &part_out));
-				assert(!p->statp);
 				p->idstate = 0;
 				p->namestate = 0;
 			}
